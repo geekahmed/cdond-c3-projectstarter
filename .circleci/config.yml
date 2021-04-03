@@ -43,6 +43,8 @@ jobs:
           name: npm run build
           working_directory: ./backend
           command: npm run build
+      - slack/notify:
+          event: fail
 
 
 
@@ -57,7 +59,8 @@ jobs:
           name: npm run build
           working_directory: ./frontend
           command: npm run build
-
+      - slack/notify:
+          event: fail
 
   test-frontend:
     docker:
