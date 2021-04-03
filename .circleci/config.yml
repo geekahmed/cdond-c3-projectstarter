@@ -55,7 +55,7 @@ jobs:
           name: Test front-end
           working_directory: ./frontend
           command: |
-            npm run test
+            npm test --ci --runInBand
                 
   test-backend:
     docker:
@@ -72,7 +72,7 @@ jobs:
           name: Test Back-end
           working_directory: ./backend
           command: |
-             npm run test
+             npm test --ci --runInBand
   
 workflows:
   default:
