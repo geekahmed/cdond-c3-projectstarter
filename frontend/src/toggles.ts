@@ -1,6 +1,6 @@
 interface Toggle {
   componentName: string;
-  environments: sting[];
+  environments: string[];
 }
 
 export const toggles: Toggle[] = [];
