@@ -3,7 +3,7 @@ orbs:
   slack: circleci/slack@4.3.3  
 
 commands:
-  destroy_environment:
+  destroy-environment:
     description: Destroy Cloud Formation Stacks and infrastructure
     parameters:
       when:
@@ -207,7 +207,7 @@ jobs:
           paths:
             - .circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure      
-      - destroy_environment:
+      - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
 
@@ -237,7 +237,7 @@ jobs:
             ansible-playbook -i inventory ./circleci/ansible/configure-server.yml
 
       # Here's where you will add some code to rollback on failure      
-      - destroy_environment:
+      - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
 
@@ -276,7 +276,7 @@ jobs:
               curl -H "Content-Type: text/plain" -H "token: f9f8f99b-efab-4fb2-8085-ed902b2b4bb2" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
-      - destroy_environment:
+      - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail   
 
@@ -318,10 +318,10 @@ jobs:
           paths:
             - frontend/dist      
       # Here's where you will add some code to rollback on failure      
-      - destroy_environment:
+      - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
-      - revert_migrations:
+      - revert-migrations:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail                    
   
@@ -349,10 +349,10 @@ jobs:
           command: |
             ansible-playbook -i inventory deploy-backend.yml
       # Here's where you will add some code to rollback on failure  
-      - destroy_environment:
+      - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
-      - revert_migrations:
+      - revert-migrations:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
 workflows:
