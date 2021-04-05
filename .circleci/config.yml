@@ -19,7 +19,7 @@ commands:
       - run:
           name: Destroy udapeople frontend cloudformation stack and S3 bucket
           command: |
-            #aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID} --recursive
+            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID} --recursive
             aws cloudformation delete-stack --stack-name frontend-<< parameters.id >>
           when: << parameters.when >>
 
@@ -390,7 +390,8 @@ jobs:
           name: Frontend smoke test.
           working_directory: ./backend
           command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID}.s3-website.use-west-2.amazonaws.com/index.html"
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID}.s3-website.us-west-2.amazonaws.com/index.html"
+            echo URL
             curl -s ${URL} | grep -q "Welcome"
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
