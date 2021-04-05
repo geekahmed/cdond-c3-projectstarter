@@ -426,31 +426,31 @@ jobs:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
 
-cleanup:
-    docker:
-      # Docker image here
-      - image: amazon/aws-cli
-    steps:
-      # Checkout code from git
-      - checkout
-      - run:
-          name: Get old stack workflow id
-          command: |
-            # your code here
-            OldWorkflowID=$(curl -H "token: c3cb5010-0819-43ec-849f-0980bc10460f" --request GET https://api.memstash.io/values/WorkflowID)
-            CurrentWorkflowID=${CIRCLE_WORKFLOW_ID}
-      - run:
-          name: Remove old stacks and files
-          command: |
-            if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
-            then
-              echo "$OldWorkflowID!=$CurrentWorkflowID => older version will be deleted"
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
-            else
-              echo "$OldWorkflowID==$CurrentWorkflowID => nothing new"
-            fi
+  cleanup:
+      docker:
+        # Docker image here
+        - image: amazon/aws-cli
+      steps:
+        # Checkout code from git
+        - checkout
+        - run:
+            name: Get old stack workflow id
+            command: |
+              # your code here
+              OldWorkflowID=$(curl -H "token: c3cb5010-0819-43ec-849f-0980bc10460f" --request GET https://api.memstash.io/values/WorkflowID)
+              CurrentWorkflowID=${CIRCLE_WORKFLOW_ID}
+        - run:
+            name: Remove old stacks and files
+            command: |
+              if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
+              then
+                echo "$OldWorkflowID!=$CurrentWorkflowID => older version will be deleted"
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
+              else
+                echo "$OldWorkflowID==$CurrentWorkflowID => nothing new"
+              fi
             
 
 workflows:
