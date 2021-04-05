@@ -226,15 +226,19 @@ jobs:
       - attach_workspace:
           at: .      
       - run:
-          name: Install Ansible and AWS CLi
+          name: Install dependencies
+          working_directory: ./.circleci/ansible
           command: |
-            apk add --update ansible build-base
-            pip install awscli --upgrade --user
-            apk --purge -v del py-pip && rm -rf /var/cache/apk/*
+            apk add --update ansible
+            ansible --version
       - run:
           name: Configure server
+          working_directory: ./.circleci/ansible
           command: |
-            ansible-playbook -i inventory ./circleci/ansible/configure-server.yml
+            pwd &&
+            ls -la
+            cat inventory
+            ansible-playbook -i inventory configure-server.yml
 
       # Here's where you will add some code to rollback on failure      
       - destroy-environment:
