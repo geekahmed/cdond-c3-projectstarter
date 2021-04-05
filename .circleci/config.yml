@@ -38,7 +38,7 @@ commands:
           when: << parameters.when >>          
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS=$(curl -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request GET https://api.memstash.io/values/DB_MIGRATION_<< parameters.id >>)
+            SUCCESS=$(curl -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request GET https://api.memstash.io/values/migration_<< parameters.id >>)
             if [[ "$SUCCESS" == "success" ]]
             then
               npm run migrations:revert
@@ -224,25 +224,25 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            echo "[web]" >> inventory.txt
-            aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
-              --output text >> inventory.txt
-            cat inventory.txt
-      
+            PUBLIC_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" --output text)
+            echo PUBLIC_URL
+            
+            cd .circleci/ansible && echo "[web]" > ./inventory
+            echo ${PUBLIC_URL} >> ./inventory
+            cat ./inventory
+
+      - run:
+          name: Configure server
+          command: |
+            cd ./.circleci/ansible
+            cat inventory
+            ansible-playbook -i inventory configure-server.yml
+
       - persist_to_workspace:
           root: .
           paths:
-            - .circleci/ansible/inventory.txt
+            - .circleci/ansible/inventory  
           
-      - run:
-          name: Configure server
-          working_directory: ./.circleci/ansible
-          command: |
-            cat inventory.txt
-            ansible-playbook -i inventory.txt configure-server.yml
-
       # Here's where you will add some code to rollback on failure      
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
@@ -351,8 +351,8 @@ jobs:
           name: Deploy backend
           working_directory: ./.circleci/ansible
           command: |
-            cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            cat inventory
+            ansible-playbook -i inventory deploy-backend.yml
       # Here's where you will add some code to rollback on failure  
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
@@ -472,10 +472,18 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only:
+                - master          
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
+          filters:
+            branches:
+              only:
+                - master
       - deploy-frontend:
           requires: [run-migrations]
       - deploy-backend:
