@@ -1,6 +1,29 @@
 version: 2.1
 orbs:
-  slack: circleci/slack@4.3.3    
+  slack: circleci/slack@4.3.3  
+
+commands:
+  destroy_environment:
+    description: Destroy Cloud Formation Stacks and infrastructure
+    parameters:
+      when:
+        type: string
+      id:
+        type: string
+    steps:
+      - run:
+          name: Destroy udapeople backend cloudformation stack
+          command: |
+            aws cloudformation delete-stack --stack-name backend-<< parameters.id >>
+          when: << parameters.when >>
+      - run:
+          name: Destroy udapeople frontend cloudformation stack and S3 bucket
+          command: |
+            aws s3 rm s3://udapeople-ohlolcfuiv --recursive
+            aws cloudformation delete-stack --stack-name frontend-<< parameters.id >>
+          when: << parameters.when >>
+
+
 jobs:
   backend-deps:
     docker:
@@ -125,28 +148,71 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              #--tags project=udapeople \
-              # --stack-name "backend-${CIRCLE_WORKFLOW_ID}" \
-              # --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
+              --tags project=backend-${CIRCLE_WORKFLOW_ID} \
+              --stack-name "backend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
+      - run:
+          name: Save backend URL in memstash
+          command: |
+            BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --output text)
+            curl -H "Content-Type: text/plain" -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request PUT --data "http://$BACKEND_IP:3030" https://api.memstash.io/values/BACKEND_URL
+
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              #--tags project=udapeople \
-              # --stack-name "frontend-${CIRCLE_WORKFLOW_ID}" \
-              # --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
+              --tags project=frontend-${CIRCLE_WORKFLOW_ID} \
+              --stack-name "frontend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            # Your code here
-            exit 1
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --output text >> inventory
+            cat inventory
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure      
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail
 
+
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.9.0-alpine      
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["dd:90:70:58:b1:e1:7c:62:0d:6a:ff:db:9f:46:0e:de"]
+      # attach workspace
+      - attach_workspace:
+          at: .      
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+            ansible --version
+      - run:
+          name: Configure server
+          command: |
+            ansible-playbook -i inventory ./circleci/ansible/configure-server.yaml
+
+      # Here's where you will add some code to rollback on failure      
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail
 
 workflows:
   default:
@@ -176,3 +242,6 @@ workflows:
           filters:
             branches:
               only: master
+      - configure-infrastructure:
+          requires:
+            - deploy-infrastructure
