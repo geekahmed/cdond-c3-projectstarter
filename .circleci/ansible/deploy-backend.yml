@@ -1,6 +1,6 @@
 ---
 
-- name: "Backend Deplyment" 
+- name: "Backend Deployment" 
   hosts: web
   user: ubuntu
   gather_facts: false

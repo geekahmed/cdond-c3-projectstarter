@@ -1,20 +1,20 @@
 ---
-  - name: "Update apt packages"
+  - name: "update apt packages."
     become: yes
     apt:
       update_cache: yes
-  
-  - name: "Upgrade Packages"
+
+  - name: "upgrade packages"
     become: yes
     apt:
       upgrade: yes
-  
-  - name: "Remove unused dependencies"
+
+  - name: "remove dependencies that are no longer required"
     become: yes
     apt:
       autoremove: yes
-  
-  - name: "Install NodeJs and NPM"
+
+  - name: "install nodejs and npm"
     become: yes
     apt:
       name: ["nodejs", "npm"]
@@ -28,11 +28,11 @@
       global: yes
       production: yes
 
-  - name: "Install NodeJs 13.8.0"
+  - name: "install nodejs 13.8.0"
     become: yes
     shell: n 13.8.0
 
-  - name: "Install pm2"
+  - name: "install pm2"
     become: yes
     npm:
       name: pm2
