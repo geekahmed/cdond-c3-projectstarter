@@ -302,17 +302,16 @@ jobs:
           command: |
             export API_URL=$(curl -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request GET https://api.memstash.io/values/BACKEND_URL)
             echo "${API_URL}"
-      
-      -run:
-        name: Build Front-end with the new backend url
-        working_directory: ./frontend
-        command: npm run build
+      - run:
+          name: Build Front-end with the new backend url
+          working_directory: ./frontend
+          command: npm run build
 
       - run:
-        name: Deploy frontend objects
-        working_directory: ./frontend          
-        command: |
-          aws s3 cp ./dist "s3://udapeople-ohlolcfuiv" --recursive
+          name: Deploy frontend objects
+          working_directory: ./frontend          
+          command: |
+            aws s3 cp ./dist "s3://udapeople-ohlolcfuiv" --recursive
       
       - persist_to_workspace:
           root: .
@@ -320,11 +319,11 @@ jobs:
             - frontend/dist      
       # Here's where you will add some code to rollback on failure      
       - destroy_environment:
-        id: ${CIRCLE_WORKFLOW_ID}
-        when: on_fail
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail
       - revert_migrations:
-        id: ${CIRCLE_WORKFLOW_ID}
-        when: on_fail                    
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail                    
   
   deploy-backend:
     docker:
