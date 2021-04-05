@@ -197,6 +197,7 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
+            echo "[web]" >> inventory.txt
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
@@ -236,6 +237,7 @@ jobs:
           name: Configure server
           working_directory: ./.circleci/ansible
           command: |
+            cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
 
       # Here's where you will add some code to rollback on failure      
@@ -346,6 +348,7 @@ jobs:
           name: Deploy backend
           working_directory: ./.circleci/ansible
           command: |
+            cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure  
       - destroy-environment:
