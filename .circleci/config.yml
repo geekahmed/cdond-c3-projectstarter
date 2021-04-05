@@ -246,20 +246,18 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: circleci/node:13.8.0
+      - image: python:3.9.0-alpine
     steps:
       # Checkout code from git
       - checkout
       - attach_workspace:
           at: .
       - run:
-          name: Install AWSCLI
-          working_directory: /temp
+          name: Install dependencies
+          working_directory: /tmp
           command: |
-            sudo apt-get update -y
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install     
+            apk add --update ansible curl rsync openssh nodejs npm
+            pip install awscli   
       - run:
           name: Run migrations
           working_directory: ./backend
@@ -285,20 +283,18 @@ jobs:
   deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
-      - image: circleci/node:13.8.0     
+      - image: python:3.9.0-alpine     
     steps:
       # Checkout code from git
       - checkout
       - attach_workspace:
           at: .      
       - run:
-          name: Install AWSCLI
-          working_directory: /temp
+          name: Install dependencies
+          working_directory: /tmp
           command: |
-            sudo apt-get update -y
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
+            apk add --update ansible curl rsync openssh nodejs npm
+            pip install awscli
       - run:
           name: Get backend url
           command: |
