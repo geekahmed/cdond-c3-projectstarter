@@ -230,6 +230,12 @@ jobs:
               --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
               --output text >> inventory.txt
             cat inventory.txt
+      
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .circleci/ansible/inventory.txt
+          
       - run:
           name: Configure server
           working_directory: ./.circleci/ansible
@@ -386,7 +392,66 @@ jobs:
       - revert-migrations:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail
-  
+  cloudfront-update:
+    docker:
+      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli      
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y tar gzip curl
+            curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+            yum install -y nodejs
+
+      - run:
+          name: Store old WorkflowID in memstash for cleanup phase
+          working_directory: ./.circleci/files
+          command: |
+            WorkflowID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            curl -H "Content-Type: text/plain" -H "token: c3cb5010-0819-43ec-849f-0980bc10460f" --request PUT --data "$WorkflowID" https://api.memstash.io/values/WorkflowID
+      - run:
+          name: Update cloudfront distribution
+          working_directory: ./.circleci/files
+          command: |
+            aws cloudformation deploy \
+              --template-file cloudfront.yaml \
+              --stack-name udapeople-cloudfront-ohlolcfuiv \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" \
+              --tags project=udapeople
+      - revert-migrations:
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail
+
+  cleanup:
+      docker:
+        # Docker image here
+        - image: amazon/aws-cli
+      steps:
+        # Checkout code from git
+        - checkout
+        - run:
+            name: Get old stack workflow id
+            command: |
+              # your code here
+              OldWorkflowID=$(curl -H "token: c3cb5010-0819-43ec-849f-0980bc10460f" --request GET https://api.memstash.io/values/WorkflowID)
+              CurrentWorkflowID=${CIRCLE_WORKFLOW_ID}
+        - run:
+            name: Remove old stacks and files
+            command: |
+              if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
+              then
+                echo "$OldWorkflowID!=$CurrentWorkflowID => older version will be deleted"
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
+              else
+                echo "$OldWorkflowID==$CurrentWorkflowID => nothing new"
+              fi  
 
 workflows:
   default:
@@ -417,3 +482,7 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
