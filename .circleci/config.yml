@@ -459,7 +459,7 @@ workflows:
       - frontend-deps
       - backend-deps
       - build-frontend:
-          requires: [-frontend-deps]
+          requires: [frontend-deps]
       - build-backend:
           requires: [backend-deps]
       - test-frontend:
