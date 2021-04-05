@@ -215,7 +215,7 @@ jobs:
   configure-infrastructure:
     docker:
       # Docker image here that supports Ansible
-      - image: circleci/node:13.8.0      
+      - image: python:3.9.0-alpine      
     steps:
       # Checkout code from git
       - checkout
@@ -226,19 +226,11 @@ jobs:
       - attach_workspace:
           at: .      
       - run:
-          name: Install AWSCLI
-          working_directory: /temp
+          name: Install Ansible and AWS CLi
           command: |
-            sudo mkdir temp && cd temp
-            sudo apt-get update -y
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-      - run:
-          name: Install Ansible
-          command: |
-            sudo apt-get update && sudo apt-get ugrade -y && sudo apt-get install python -y
-            sudo apt-get install ansible -y
+            apk add --update ansible build-base
+            pip install awscli --upgrade --user
+            apk --purge -v del py-pip && rm -rf /var/cache/apk/*
       - run:
           name: Configure server
           command: |
