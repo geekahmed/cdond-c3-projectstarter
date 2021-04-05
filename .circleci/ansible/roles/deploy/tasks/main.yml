@@ -26,6 +26,7 @@
       chdir: /home/ubuntu/uda_app/dist
     environment:
      ENVIRONMENT: production
+     ANSIBLE_HOST_KEY_CHECKING: false
      TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
      TYPEORM_MIGRATIONS_DIR: "./migrations"
      TYPEORM_MIGRATIONS: "./migrations/*.js"
