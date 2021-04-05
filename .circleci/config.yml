@@ -431,6 +431,10 @@ jobs:
               --stack-name udapeople-cloudfront-ohlolcfuiv \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" \
               --tags project=udapeople
+     
+      - destroy-environment:
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail              
       - revert-migrations:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail

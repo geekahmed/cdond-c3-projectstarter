@@ -12,6 +12,7 @@
   roles:
     # Your code here
     - configure-server
+    - configure-prometheus-node-exporter
   environment:
     Environment: production
     TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"

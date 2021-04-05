@@ -24,4 +24,4 @@
     state: restarted
     daemon_reload: yes
     name: node_exporter
-    enabled: yes
+    enabled: yes  
