@@ -184,7 +184,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
               --output text)
-            curl -H "Content-Type: text/plain" -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request PUT --data "http://$BACKEND_IP:3030" https://api.memstash.io/values/BACKEND_URL
+            curl -H "Content-Type: text/plain" -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request PUT --data "$BACKEND_IP:3030" https://api.memstash.io/values/BACKEND_URL
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -379,8 +379,7 @@ jobs:
           working_directory: ./backend
           command: |
             export BACKEND_URL=$(curl -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request GET https://api.memstash.io/values/BACKEND_URL)
-            # curl "$BACKEND_URL/api/status"
-            if curl -s "${BACKEND_URL}/api/status" | grep "ok"
+            if curl -s "http://${BACKEND_URL}/api/status" | grep "ok"
             then
               return 0
             else
