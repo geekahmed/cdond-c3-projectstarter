@@ -265,7 +265,7 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
       - run:
-          name: Run migrations
+          name: Run migrations and Send results to memstash
           working_directory: ./backend
           command: |
             touch .env
@@ -287,15 +287,8 @@ jobs:
             echo $TYPEORM_DATABASE          
             
             npm run migrations > migration_status
-            cat migration_status
-      - run:
-          name: Send migration results to memstash
-          working_directory: ./backend
-          command: |
-            cd backend
-            cat migration_status
 
-            if[ $(grep -i "No migrations are pending" migration_status | wc -l) -ge 1 ]
+            if grep -q "has been executed successfully" migration_status
             then
               echo "DB migration was successful, will update memstash..."
               curl -H "Content-Type: text/plain" -H "token: f9f8f99b-efab-4fb2-8085-ed902b2b4bb2" --request PUT --data "success" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
@@ -304,6 +297,7 @@ jobs:
               curl -H "Content-Type: text/plain" -H "token: f9f8f99b-efab-4fb2-8085-ed902b2b4bb2" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
+
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail   
