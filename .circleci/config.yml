@@ -281,7 +281,6 @@ jobs:
             else
               echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
               curl -H "Content-Type: text/plain" -H "token: f9f8f99b-efab-4fb2-8085-ed902b2b4bb2" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-              return 1
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
       - destroy-environment:
