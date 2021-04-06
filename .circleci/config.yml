@@ -184,7 +184,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID}" \
               --output text)
-            curl -H "Content-Type: text/plain" -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request PUT --data "$BACKEND_IP" https://api.memstash.io/values/BACKEND_URL
+            curl -H "Content-Type: text/plain" -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request PUT --data "http://$BACKEND_IP:3030" https://api.memstash.io/values/BACKEND_URL
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -302,15 +302,12 @@ jobs:
             apk add --update ansible curl rsync openssh nodejs npm
             pip install awscli
       - run:
-          name: Get backend url
+          name: Get backend url and Build the Frontend
+          working_directory: ./fronend
           command: |
             export API_URL=$(curl -H "token: 6b5676e5-3333-4c24-a5b1-5ba0040235b0" --request GET https://api.memstash.io/values/BACKEND_URL)
             echo "${API_URL}"
-      - run:
-          name: Build Front-end with the new backend url
-          working_directory: ./frontend
-          command: npm run build
-
+            npm run build
       - run:
           name: Deploy frontend objects
           working_directory: ./frontend          
@@ -454,6 +451,8 @@ jobs:
         - run:
             name: Remove old stacks and files
             command: |
+              echo $OldWorkflowID
+              echo $CurrentWorkflowID
               if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
               then
                 echo "$OldWorkflowID!=$CurrentWorkflowID => older version will be deleted"
