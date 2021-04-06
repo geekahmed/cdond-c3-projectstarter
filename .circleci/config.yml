@@ -269,6 +269,7 @@ jobs:
           working_directory: ./backend
           command: |
             npm run migrations > migration_status
+            cat migration_status
       - run:
           name: Send migration results to memstash
           working_directory: ./backend
@@ -280,6 +281,7 @@ jobs:
             else
               echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
               curl -H "Content-Type: text/plain" -H "token: f9f8f99b-efab-4fb2-8085-ed902b2b4bb2" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+              return 1
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
       - destroy-environment:
@@ -443,14 +445,11 @@ jobs:
         # Checkout code from git
         - checkout
         - run:
-            name: Get old stack workflow id
+            name: Remove Old Stack and Files
             command: |
               # your code here
               OldWorkflowID=$(curl -H "token: c3cb5010-0819-43ec-849f-0980bc10460f" --request GET https://api.memstash.io/values/WorkflowID)
               CurrentWorkflowID=${CIRCLE_WORKFLOW_ID}
-        - run:
-            name: Remove old stacks and files
-            command: |
               echo $OldWorkflowID
               echo $CurrentWorkflowID
               if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
